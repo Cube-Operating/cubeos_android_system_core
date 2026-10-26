@@ -41,7 +41,13 @@ class ChargerHidl : public ::android::ChargerConfigurationInterface,
     // HealthLoop overrides
     void Heartbeat() override { charger_->OnHeartbeat(); }
     int PrepareToWait() override { return charger_->OnPrepareToWait(); }
-    void Init(struct healthd_config* config) override { charger_->OnInit(config); }
+    void Init(struct healthd_config* config) override {
+        charger_->OnInit(config);
+        // CubeOS: read the battery now. Otherwise the first reading waits for a power_supply
+        // uevent or the 60 s chore, and on the Cube Phone (MediaTek KPOC) none came within the
+        // UI's 5 s wait, so it drew "battery unknown" instead of the charge.
+        ScheduleBatteryUpdate();
+    }
     // HalHealthLoop overrides
     void OnHealthInfoChanged(const HealthInfo_2_1& health_info) override;
 
